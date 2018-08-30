@@ -14,6 +14,8 @@ stdmin = par.stdmin;
 stdmax = par.stdmax;
 fmin_detect = par.detect_fmin;
 fmax_detect = par.detect_fmax;
+fmin_notch = par.notch_fmin;
+fmax_notch = par.notch_fmax;
 fmin_sort = par.sort_fmin;
 fmax_sort = par.sort_fmax;
 
@@ -22,7 +24,7 @@ fmax_sort = par.sort_fmax;
 if exist('ellip','file')                         %Checks for the signal processing toolbox
     [b_detect,a_detect] = ellip(par.detect_order,0.1,40,[fmin_detect fmax_detect]*2/sr);
     [b,a] = ellip(par.sort_order,0.1,40,[fmin_sort fmax_sort]*2/sr);
-    [b_notch,a_notch] = butter(par.detect_order,[55 65]*2/sr, 'stop');
+    [b_notch,a_notch] = butter(par.detect_order,[fmin_notch fmax_notch]*2/sr, 'stop');
 %     [z_det,p_det,k_det] = ellip(par.detect_order,0.1,40,[fmin_detect fmax_detect]*2/sr);
 %     [z,p,k] = ellip(par.sort_order,0.1,40,[fmin_sort fmax_sort]*2/sr);
 %     
