@@ -36,7 +36,7 @@ if exist('ellip','file')                         %Checks for the signal processi
 %         xf_detect = FiltFiltM(b_notch2, a_notch2, xf_detect);
     	xf_detect = FiltFiltM(b_detect, a_detect, xf_detect);
         xf = FiltFiltM(b_notch, a_notch, x);
-        xf = FiltFiltM(b_notch2, a_notch2, xf);
+%        xf = FiltFiltM(b_notch2, a_notch2, xf);
         xf = FiltFiltM(b, a, xf); 
     else
         xf_detect = filtfilt(b_notch, a_notch, x);
