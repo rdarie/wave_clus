@@ -14,8 +14,8 @@ stdmin = par.stdmin;
 stdmax = par.stdmax;
 fmin_detect = par.detect_fmin;
 fmax_detect = par.detect_fmax;
-fmin_notch = par.notch_fmin;
-fmax_notch = par.notch_fmax;
+f_notch = par.notch_f;
+wid_notch = par.notch_wid;
 fmin_sort = par.sort_fmin;
 fmax_sort = par.sort_fmax;
 
@@ -24,7 +24,8 @@ fmax_sort = par.sort_fmax;
 if exist('ellip','file')                         %Checks for the signal processing toolbox
     [b_detect,a_detect] = ellip(par.detect_order,0.1,40,[fmin_detect fmax_detect]*2/sr);
     [b,a] = ellip(par.sort_order,0.1,40,[fmin_sort fmax_sort]*2/sr);
-    [b_notch,a_notch] = butter(par.detect_order,[fmin_notch fmax_notch]*2/sr, 'stop');
+    [b_notch,a_notch] = butter(par.notch_order,[f_notch-wid_notch f_notch+wid_notch]*2/sr, 'stop');
+%     [b_notch2,a_notch2] = butter(par.notch_order,[2*f_notch-wid_notch 2*f_notch+wid_notch]*2/sr, 'stop');
 %     [z_det,p_det,k_det] = ellip(par.detect_order,0.1,40,[fmin_detect fmax_detect]*2/sr);
 %     [z,p,k] = ellip(par.sort_order,0.1,40,[fmin_sort fmax_sort]*2/sr);
 %     
@@ -32,12 +33,18 @@ if exist('ellip','file')                         %Checks for the signal processi
 %     [SOS_det,G_det] = zp2sos(z_det,p_det,k_det);
     if exist('FiltFiltM','file')
         xf_detect = FiltFiltM(b_notch, a_notch, x);
+%         xf_detect = FiltFiltM(b_notch2, a_notch2, xf_detect);
     	xf_detect = FiltFiltM(b_detect, a_detect, xf_detect);
-        xf = FiltFiltM(b, a, x); 
+        xf = FiltFiltM(b_notch, a_notch, x);
+        xf = FiltFiltM(b_notch2, a_notch2, xf);
+        xf = FiltFiltM(b, a, xf); 
     else
         xf_detect = filtfilt(b_notch, a_notch, x);
+%         xf_detect = filtfilt(b_notch2, a_notch2, xf_detect);
         xf_detect = filtfilt(b_detect, a_detect, xf_detect);
-        xf = filtfilt(b, a, x);
+        xf = filtfilt(b_notch, a_notch, x);
+%         xf = filtfilt(b_notch2, a_notch2, xf);
+        xf = filtfilt(b, a, xf);
 %         xf_detect = filtfilt(SOS_det, G_det, x);
 %         xf = filtfilt(SOS,G, x);
         
