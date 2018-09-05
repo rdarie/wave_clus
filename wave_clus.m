@@ -716,73 +716,21 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             if (sum(cell2mat(sorted_timestamp_lengths))+length(inputTimestamps(noise_waves)) ~= length(inputTimestamps))
                 warning('Not all input waves have been assigned to a class or noise! Something wrong with code')                
             end
-            %duplicate these USER_DATA fields in case the original wave was split into
-            %multiple waves
-            dupFields=[...
-                4,... %SPC parameters
-                7,... %spike features
-                10,... %clustering results
-                11,... %clustering results backup
-                13,... %forced
-                14,... %forced backup
-                15,... %rejected
-                16]; %rejected backup
-            
-            for iField=1:length(dupFields)
-                values={};
-                %first get all values for each cluster class
-                for iClass=1:length(original_input_indices)
-                    if (size(USER_DATA{dupFields(iField)},1)>size(USER_DATA{dupFields(iField)},2))
-                        values{iClass}=USER_DATA{dupFields(iField)}(forcedIndices(original_input_indices{iClass}),:);
-                    else
-                        values{iClass}=USER_DATA{dupFields(iField)}(:,forcedIndices(original_input_indices{iClass}));
-                    end
-                end
-                
-                %all the spikes are the concatenation of all the cluster
-                %classes, plus noise, and finally, plus the non-forced
-                %spikes
-                
-                %Radu Darie: USER_DATA{4} is special because it has two
-                %extra columns at the beginning
-                if dupFields(iField) == 4
-                    saveClu = USER_DATA{4}(:,1:2);
-                end
-                
-                if (size(USER_DATA{dupFields(iField)},1)>size(USER_DATA{dupFields(iField)},2))
-                    USER_DATA{dupFields(iField)}=[cat(1,values{:});...
-                        USER_DATA{dupFields(iField)}(forcedIndices(noise_waves),:);...
-                        USER_DATA{dupFields(iField)}(nonForcedIndices,:)];
-                else
-                    USER_DATA{dupFields(iField)}=[cat(2,values{:}),...
-                        USER_DATA{dupFields(iField)}(:,forcedIndices(noise_waves)),...
-                        USER_DATA{dupFields(iField)}(:,nonForcedIndices)];
-                end
-                
-                %Radu Darie: add missing columns to USER_DATA{4}
-                if dupFields(iField) == 4
-                    USER_DATA{4} = cat(2, [saveClu, USER_DATA{4}]);
-                end
-                
-            end
             
             %overwritten values
             for iClass=1:length(original_input_indices)
                 newClasses{iClass}=repmat(iClass, length(sorted_timestamps{iClass}),1);
             end
+            newClasses = [cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{6}(nonForcedIndices)]; %class
             
-            USER_DATA{2}=[cat(2,rec_waves{:})'; inputWaves(noise_waves,:); USER_DATA{2}(nonForcedIndices,:)]; %waveforms
-            newTimestamps = [cat(2,sorted_timestamps{:}), inputTimestamps(noise_waves), USER_DATA{3}(nonForcedIndices)];
-            USER_DATA{3}= newTimestamps; %timestamps
-            USER_DATA{6}=[cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{6}(nonForcedIndices)]; %class
-            USER_DATA{9}=[cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{9}(nonForcedIndices)]; %class backup
+            [~,unshuffleOrder] = sort(shuffleOrder);
+            newClasses =newClasses(unshuffleOrder);
+            USER_DATA{6}=newClasses; %class
             
             %end David Added
             
             % Radu fix GUI problem
-            % to_force = (~rejected(shuffleOrder))' & (classes(shuffleOrder)==0);
-            forced = forced(shuffleOrder) | to_force(shuffleOrder); % TODO. This is still in the old order, not the order spat out by swade
-            
+            forced = forced(:) | to_force(:); 
             USER_DATA{13} = forced;
             
             clustering_results = USER_DATA{10};
