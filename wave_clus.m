@@ -759,31 +759,36 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             
         else
             
-        class_in = classes(classes>0);
-        class_out = force_membership_wc(f_in, class_in, f_out, par);
-        forced = forced(:) | to_force(:);
-        classes(to_force) = class_out;
-        USER_DATA{13} = forced;
-
-        clustering_results = USER_DATA{10};
-        handles.minclus = clustering_results(1,5);
-        handles.force = 1;
-        handles.setclus = 1;
-        set(hObject,'String','FORCED')
-        %set(handles.change_temperature_button,'enable','off');
+            class_in = classes(classes>0);
+            class_out = force_membership_wc(f_in, class_in, f_out, par);
+            forced = forced(:) | to_force(:);
+            classes(to_force) = class_out;
+            USER_DATA{13} = forced;
+            
+            clustering_results = USER_DATA{10};
+            handles.minclus = clustering_results(1,5);
+            handles.force = 1;
+            handles.setclus = 1;
+            set(hObject,'String','FORCED')
+            %set(handles.change_temperature_button,'enable','off');
+            USER_DATA{6} = classes(:)';
+        end
     else
-
+%         clu = USER_DATA{4};
+%         temp = USER_DATA{8};
+%         classes = clu(temp,3:end)+1;       
+        
         new_forced = zeros(size(forced));
         % Fixed clusters are not considered for forcing
-%         if get(handles.fix1_button,'value') ==1
+%         if get(handles.fix1_button,'value') ==1     
 %             fix_class = USER_DATA{20}';
 %             new_forced(fix_class) =forced(fix_class);
 %         end
-%         if get(handles.fix2_button,'value') ==1
+%         if get(handles.fix2_button,'value') ==1     
 %             fix_class = USER_DATA{21}';
 %             new_forced(fix_class) =forced(fix_class);
 %         end
-%         if get(handles.fix3_button,'value') ==1
+%         if get(handles.fix3_button,'value') ==1     
 %             fix_class = USER_DATA{22}';
 %             new_forced(fix_class) =forced(fix_class);
 %         end
@@ -802,22 +807,23 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             eval(['par.fix' num2str(i) '=0;']);
         end
         classes(forced(:) & (~new_forced(:)) & (~rejected(:))) = 0;  %the elements that before were forced but it isn't force any more, pass to class 0
-        USER_DATA{13} = new_forced;
+        USER_DATA{13} = new_forced; 
         handles.force = 0;
         handles.setclus = 1;
         handles.unforce = true;
         set(hObject,'String','Force')
         %set(handles.change_temperature_button,'enable','on');
-    end
-    USER_DATA{6} = classes(:)';
-
+        USER_DATA{6} = classes(:)';
+   end
+    
     handles.merge = 0;
+    
     handles.undo = 0;
     set(handles.wave_clus_figure,'userdata',USER_DATA)
     plot_spikes(handles);
 
 
-
+        
 function manual_clus_button_Callback(hObject, eventdata,handles_local, cl)
     set(hObject,'Enable','off')
     try
