@@ -757,6 +757,16 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             
             %end David Added
             
+            % Radu fix GUI problem
+            forced = forced(:) | to_force(:);
+            USER_DATA{13} = forced;
+            
+            clustering_results = USER_DATA{10};
+            handles.minclus = clustering_results(1,5);
+            handles.force = 1;
+            handles.setclus = 1;
+            set(hObject,'String','FORCED')
+            
         else
             
             class_in = classes(classes>0);

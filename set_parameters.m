@@ -584,7 +584,7 @@ par.template_k_min = 10;            % min # of nn for vote
  
  
  
-par.template_type = 'center';       % nn, center, ml, mahal 
+par.template_type = 'carlos';       % nn, center, ml, mahal, carlos 
  
  
  
