@@ -1,4 +1,4 @@
-function [sorted_timestamps, noise_waves, rec_waves, noise_amp, original_input_indices]= SWADE_XI(waves, timestamps, pcp, cent_reg_m, outlines_m, cr_wnum_m, mean_waves_m,  mw_sd_m, th, av_th, th_o, th_temp, fig_handle)
+function [sorted_timestamps, noise_waves, rec_waves, noise_amp, original_input_indices]= SWADE_XI(waves, timestamps, pcp, cent_reg_m, outlines_m, cr_wnum_m, mean_waves_m,  mw_sd_m, th, av_th, th_o, th_temp, fig_handle, assign_overlaps)
 	% parameter fig_handle: If ~= 0, assume this is a figure handle and plot density + templates.
 	% If there is no figure that has this handle, create a new figure.
 
@@ -7,7 +7,7 @@ function [sorted_timestamps, noise_waves, rec_waves, noise_amp, original_input_i
 %  Carlos Vargas-Irwin, Donoghue Lab   Last updated 10/11/05
 % 
 % David Xing made some modifications (added an additional output of indices of the original wave the sorted wave is derrived from) for integrating into wave_clus, 5/11/18
-
+% Radu Darie added an option to reject collisions from analysis
 [points, numwaves] = size(waves);
 
 %%%%%%%%%
@@ -53,7 +53,14 @@ for w = 1:numwaves
 
 
     [tmatch, tshift]= temp_match_overlap_X( wav, mean_waves_m,th_o);
-
+    
+    % Radu Darie modified to reject all but one match
+    if ~ assign_overlaps && length(find(tmatch<inf)) > 1
+        tmatch_max = max(tmatch(tmatch < Inf));
+        max_idx = find(tmatch == tmatch_max, 1);
+        other_idx = 1:length(tmatch) ~= max_idx;
+        tmatch(other_idx) = Inf;
+    end
     r_waves = reconstruct_waves(wav, mean_waves_m, tshift, tmatch, th, av_th);
 
 

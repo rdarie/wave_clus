@@ -693,7 +693,7 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             end
             
             [sorted_timestamps, noise_waves, rec_waves, noise_amp, original_input_indices]= SWADE_XI(...
-                inputWaves', inputTimestamps, [], placeHolder, [], [], templates,  [], thresh, par.SWADE_average_threshold, par.SWADE_overlap_threshold, par.SWADE_template_threshold, 0);
+                inputWaves', inputTimestamps, [], placeHolder, [], [], templates,  [], thresh, par.SWADE_average_threshold, par.SWADE_overlap_threshold, par.SWADE_template_threshold, 0, false);
             
             %sanity check, all original input indices have been assigned to
             %a class (or noise)
@@ -708,6 +708,11 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
                 warning('Some noise waveforms have been assigned to a class somehow! Something wrong with code');
             end
             
+            %sanity check that all waveforms were assigned to something:
+            sorted_timestamp_lengths = cellfun(@length,sorted_timestamps,'UniformOutput',false);
+            if (sum(cell2mat(sorted_timestamp_lengths))+length(inputTimestamps(noise_waves)) ~= length(inputTimestamps))
+                warning('Not all input waves have been assigned to a class or noise! Something wrong with code')                
+            end
             %duplicate these USER_DATA fields in case the original wave was split into
             %multiple waves
             dupFields=[...
@@ -751,7 +756,8 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             end
             
             USER_DATA{2}=[cat(2,rec_waves{:})'; inputWaves(noise_waves,:); USER_DATA{2}(nonForcedIndices,:)]; %waveforms
-            USER_DATA{3}=[cat(2,sorted_timestamps{:}), inputTimestamps(noise_waves), USER_DATA{3}(nonForcedIndices)]; %timestamps
+            newTimestamps = [cat(2,sorted_timestamps{:}), inputTimestamps(noise_waves), USER_DATA{3}(nonForcedIndices)];
+            USER_DATA{3}= newTimestamps; %timestamps
             USER_DATA{6}=[cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{6}(nonForcedIndices)]; %class
             USER_DATA{9}=[cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{9}(nonForcedIndices)]; %class backup
             
