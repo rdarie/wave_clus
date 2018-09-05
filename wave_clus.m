@@ -199,6 +199,7 @@ check_WC_params(handles.par)
 
 if data_handler.with_results %data have _times files
     [clu, tree, spikes, index, inspk, ipermut, classes, forced,temp] = data_handler.load_results();
+    index = index';
     rejected = data_handler.load_rejected();
     handles.setclus = 1;
     if isempty(ipermut)
@@ -697,7 +698,9 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             
             %sanity check, all original input indices have been assigned to
             %a class (or noise)
-            allInds=sort(unique(cat(1,original_input_indices{:},noise_waves')));
+            shuffleOrder = cat(1,original_input_indices{:},noise_waves');
+            
+            allInds=sort(unique(shuffleOrder));
             if(length(allInds)~=length(inputTimestamps) || any(allInds'~=(1:length(inputTimestamps))))
                 warning('Not all input waves have been assigned to a class or noise! Something wrong with code')
             end
@@ -739,6 +742,13 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
                 %all the spikes are the concatenation of all the cluster
                 %classes, plus noise, and finally, plus the non-forced
                 %spikes
+                
+                %Radu Darie: USER_DATA{4} is special because it has two
+                %extra columns at the beginning
+                if dupFields(iField) == 4
+                    saveClu = USER_DATA{4}(:,1:2);
+                end
+                
                 if (size(USER_DATA{dupFields(iField)},1)>size(USER_DATA{dupFields(iField)},2))
                     USER_DATA{dupFields(iField)}=[cat(1,values{:});...
                         USER_DATA{dupFields(iField)}(forcedIndices(noise_waves),:);...
@@ -748,6 +758,12 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
                         USER_DATA{dupFields(iField)}(:,forcedIndices(noise_waves)),...
                         USER_DATA{dupFields(iField)}(:,nonForcedIndices)];
                 end
+                
+                %Radu Darie: add missing columns to USER_DATA{4}
+                if dupFields(iField) == 4
+                    USER_DATA{4} = cat(2, [saveClu, USER_DATA{4}]);
+                end
+                
             end
             
             %overwritten values
@@ -764,7 +780,9 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             %end David Added
             
             % Radu fix GUI problem
-            forced = forced(:) | to_force(:);
+            % to_force = (~rejected(shuffleOrder))' & (classes(shuffleOrder)==0);
+            forced = forced(shuffleOrder) | to_force(shuffleOrder); % TODO. This is still in the old order, not the order spat out by swade
+            
             USER_DATA{13} = forced;
             
             clustering_results = USER_DATA{10};
