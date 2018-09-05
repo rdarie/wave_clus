@@ -308,24 +308,34 @@ par.force_auto = true;              %automatically force membership (only for ba
  
  
  
+% ~~~~~~~~~~~~~~~~~~~~~~ 
+ 
+% -----David added------ 
+ 
+% ~~~~~~~~~~~~~~~~~~~~~~ 
+ 
+% Parameters for Carlos SWADE algorithm 
+ 
+par.SWADE_threshold=80; 
+
+par.SWADE_threshold_STDMultiplier=2.58;       
+ 
+par.SWADE_average_threshold=15; 
+ 
+par.SWADE_overlap_threshold=80; 
+ 
+par.SWADE_template_threshold=80; 
+ 
+% Amplitude rejection threshold 
+ 
+par.maxAmp = 1000; 
  
  
+% ~~~~~~~~~~~~~~~~~~~~~~ 
  
+% ---End David added---- 
  
-% TEMPLATE MATCHING 
- 
- 
- 
-par.match = 'y';                    % for template matching 
- 
- 
- 
-%par.match = 'n';                   % for no template matching 
- 
- 
- 
-par.max_spk = 40000;                % max. # of spikes before starting templ. match. 
- 
+% ~~~~~~~~~~~~~~~~~~~~~~ 
  
  
 par.permut = 'y';                   % for selection of random 'par.max_spk' spikes before starting templ. match. 

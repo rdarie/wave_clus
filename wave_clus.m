@@ -662,7 +662,103 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
                 f_in  = inspk(classes>0,:);
                 f_out = inspk(to_force,:);
         end
-
+        
+        %David Added
+        if strcmpi(par.template_type,'carlos')
+            %use carlos template matching algorithm
+            
+            %get the spikes that will be forced (anything that's not
+            %rejected. We want to run Carlos's algorithm on the already
+            %sorted spikes as well (in case of spike collisions)
+            nonForcedIndices=find(rejected); %will be used when reintegrating out of SWADE_XI back to USER_DATA
+            forcedIndices=find(~rejected);
+            inputWaves = spikes(~rejected,:); %waveforms
+            inputTimestamps = USER_DATA{3}(~rejected);
+            
+            %calculate templates
+            templateNums=unique(classes(~rejected));
+            templateNums(templateNums==0)=[];
+            for iTemplate=1:length(templateNums)
+                templates(:,iTemplate)=mean(inputWaves(classes(~rejected)==templateNums(iTemplate),:));
+                templateNoiseValues{iTemplate}=inputWaves(classes(~rejected)==templateNums(iTemplate),1:5);
+                placeHolder{iTemplate}=[];
+            end
+            
+            if ~isnan(par.SWADE_threshold_STDMultiplier)
+                allNoiseValues=cat(1,templateNoiseValues{:});
+                noiseSTD=std(allNoiseValues(:));
+                thresh=par.SWADE_threshold_STDMultiplier*noiseSTD;
+            else
+                thresh=par.SWADE_threshold;
+            end
+            
+            [sorted_timestamps, noise_waves, rec_waves, noise_amp, original_input_indices]= SWADE_XI(...
+                inputWaves', inputTimestamps, [], placeHolder, [], [], templates,  [], thresh, par.SWADE_average_threshold, par.SWADE_overlap_threshold, par.SWADE_template_threshold, 0);
+            
+            %sanity check, all original input indices have been assigned to
+            %a class (or noise)
+            allInds=sort(unique(cat(1,original_input_indices{:},noise_waves')));
+            if(length(allInds)~=length(inputTimestamps) || any(allInds'~=(1:length(inputTimestamps))))
+                warning('Not all input waves have been assigned to a class or noise! Something wrong with code')
+            end
+            
+            %sanity check, the noise waveforms shouldn't appear in any of
+            %the classified spikes
+            if (any(cellfun(@(x) any(ismember(x,noise_waves)),original_input_indices)))
+                warning('Some noise waveforms have been assigned to a class somehow! Something wrong with code');
+            end
+            
+            %duplicate these USER_DATA fields in case the original wave was split into
+            %multiple waves
+            dupFields=[...
+                4,... %SPC parameters
+                7,... %spike features
+                10,... %clustering results
+                11,... %clustering results backup
+                13,... %forced
+                14,... %forced backup
+                15,... %rejected
+                16]; %rejected backup
+            
+            for iField=1:length(dupFields)
+                values={};
+                %first get all values for each cluster class
+                for iClass=1:length(original_input_indices)
+                    if (size(USER_DATA{dupFields(iField)},1)>size(USER_DATA{dupFields(iField)},2))
+                        values{iClass}=USER_DATA{dupFields(iField)}(forcedIndices(original_input_indices{iClass}),:);
+                    else
+                        values{iClass}=USER_DATA{dupFields(iField)}(:,forcedIndices(original_input_indices{iClass}));
+                    end
+                end
+                
+                %all the spikes are the concatenation of all the cluster
+                %classes, plus noise, and finally, plus the non-forced
+                %spikes
+                if (size(USER_DATA{dupFields(iField)},1)>size(USER_DATA{dupFields(iField)},2))
+                    USER_DATA{dupFields(iField)}=[cat(1,values{:});...
+                        USER_DATA{dupFields(iField)}(forcedIndices(noise_waves),:);...
+                        USER_DATA{dupFields(iField)}(nonForcedIndices,:)];
+                else
+                    USER_DATA{dupFields(iField)}=[cat(2,values{:}),...
+                        USER_DATA{dupFields(iField)}(:,forcedIndices(noise_waves)),...
+                        USER_DATA{dupFields(iField)}(:,nonForcedIndices)];
+                end
+            end
+            
+            %overwritten values
+            for iClass=1:length(original_input_indices)
+                newClasses{iClass}=repmat(iClass, length(sorted_timestamps{iClass}),1);
+            end
+            
+            USER_DATA{2}=[cat(2,rec_waves{:})'; inputWaves(noise_waves,:); USER_DATA{2}(nonForcedIndices,:)]; %waveforms
+            USER_DATA{3}=[cat(2,sorted_timestamps{:}), inputTimestamps(noise_waves), USER_DATA{3}(nonForcedIndices)]; %timestamps
+            USER_DATA{6}=[cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{6}(nonForcedIndices)]; %class
+            USER_DATA{9}=[cat(1,newClasses{:}); zeros(length(noise_waves),1); USER_DATA{9}(nonForcedIndices)]; %class backup
+            
+            %end David Added
+            
+        else
+            
         class_in = classes(classes>0);
         class_out = force_membership_wc(f_in, class_in, f_out, par);
         forced = forced(:) | to_force(:);

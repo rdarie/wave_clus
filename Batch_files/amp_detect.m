@@ -19,6 +19,8 @@ wid_notch = par.notch_wid;
 fmin_sort = par.sort_fmin;
 fmax_sort = par.sort_fmax;
 
+%David added absolute value cutoff for high-amplitude noise
+maxAmp=par.maxAmp;
 
 %HIGH-PASS FILTER OF THE DATA
 if exist('ellip','file')                         %Checks for the signal processing toolbox
@@ -58,7 +60,12 @@ end
 noise_std_detect = median(abs(xf_detect))/0.6745;
 noise_std_sorted = median(abs(xf))/0.6745;
 thr = stdmin * noise_std_detect;        %thr for detection is based on detect settings.
-thrmax = stdmax * noise_std_sorted;     %thrmax for artifact removal is based on sorted settings.
+
+if (maxAmp==0)
+    thrmax = stdmax * noise_std_sorted;     %thrmax for artifact removal is based on sorted settings.
+else
+    thrmax = maxAmp;
+end
 
 index = [];
 sample_ref = floor(ref/2);
