@@ -87,7 +87,7 @@ par.cont_plot_samples = 100000;      % number of samples used in the one-minute 
  
  
  
-par.to_plot_std = 1;                 % # of std from mean to plot 
+par.to_plot_std = 2;                 % # of std from mean to plot 
  
  
  
@@ -280,7 +280,7 @@ par.tmin= 0;                         % starting time for loading (in sec)
  
  
  
-par.w_pre = 40;                      % number of pre-event data points stored (default 20) 
+par.w_pre = 14;                      % number of pre-event data points stored (default 20) 
  
  
  
@@ -288,7 +288,7 @@ par.w_pre = 40;                      % number of pre-event data points stored (d
  
  
  
-par.w_post = 88;                     % number of post-event data points stored (default 44)) 
+par.w_post = 50;                     % number of post-event data points stored (default 44)) 
  
  
  
@@ -392,7 +392,7 @@ par.sort_order = 2;                  % filter order for sorting
  
  
  
-par.ref_ms = 1.5;                    % detector dead time, minimum refractory period (in ms) 
+par.ref_ms = 2.5;                    % detector dead time, minimum refractory period (in ms) 
  
  
  
@@ -694,7 +694,7 @@ par.max_spk = 20000;                % max. # of spikes before starting templ. ma
  
  
  
-par.permut = 'y';                   % for selection of random 'par.max_spk' spikes before starting templ. match. 
+par.permut = 'n';                   % for selection of random 'par.max_spk' spikes before starting templ. match. 
  
  
  

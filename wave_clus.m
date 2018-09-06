@@ -727,6 +727,8 @@ function force_unforce_button_Callback(hObject, eventdata, handles)
             newClasses =newClasses(unshuffleOrder);
             USER_DATA{6}=newClasses; %class
             
+            newTimeStamps = [cat(2,sorted_timestamps{:}), inputTimestamps(noise_waves), USER_DATA{3}(nonForcedIndices)]; %timestamps
+            USER_DATA{3} = newTimeStamps(unshuffleOrder); %the new timestamps realign colliding spikes
             %end David Added
             
             % Radu fix GUI problem
