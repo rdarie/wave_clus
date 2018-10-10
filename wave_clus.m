@@ -824,8 +824,17 @@ function manual_clus_button_Callback(hObject, eventdata,handles_local, cl)
         spikes = USER_DATA{2};
         classes = USER_DATA{6};
         forced = USER_DATA{13};
-
-        if cl == -1
+        inspk = USER_DATA{7};
+        
+        selectingFeatureSpace = false;
+        if cl == -1 % which window did I click on?
+            selectingFeatureSpace = logical(handles.spike_features_button.Value);
+            if selectingFeatureSpace
+                if isempty(inspk) || (length(inspk)~=size(spikes,1))
+                    [inspk] = wave_features(spikes,handles);
+                    USER_DATA{7} = inspk;
+                end
+            end
             current_ax = handles_local.projections;
             valids = ~USER_DATA{15}(:); %First, I don't select the rejected
         else
@@ -839,12 +848,17 @@ function manual_clus_button_Callback(hObject, eventdata,handles_local, cl)
             rect = aux_rec.getPosition;
             aux_rec.delete()
         end
-
-        if rect(1) > size(spikes,2) || (rect(1) + rect(3))<1 %if the rect is totally outside the axis
+        
+        %rect(1) rect(3) are the x origin and width
+        %rect(2) rect(4) are the y origin and width
+        
+        if ~selectingFeatureSpace && (rect(1) > size(spikes,2) || (rect(1) + rect(3))<1) 
+            %if the rect is totally outside the x axis
             set(hObject,'Enable','on');
             set(hObject,'value',0);
             return;
         end
+        
         yborders = ylim(current_ax);
         if rect(2)<yborders(1)
             ymin = -inf;
@@ -856,9 +870,25 @@ function manual_clus_button_Callback(hObject, eventdata,handles_local, cl)
         else
             ymax = rect(2) + rect(4);
         end
-        xind = max(1, ceil(rect(1)));
-        xend = min(size(spikes,2),floor(rect(1) + rect(3)));
-        if(rect(3)<2)
+        
+        xborders = xlim(current_ax);
+        if rect(1)<xborders(1)
+            xmin = -inf;
+        else
+            xmin = rect(1);
+        end
+        if rect(1) + rect(3)>xborders(2)
+            xmax = inf;
+        else
+            xmax = rect(1) + rect(3);
+        end
+        
+        if ~selectingFeatureSpace
+            xind = max(1, ceil(rect(1)));
+            xend = min(size(spikes,2),floor(rect(1) + rect(3)));
+        end
+        
+        if(rect(3)<2) && ~selectingFeatureSpace
             if rect(3)==0
                 set(hObject,'Enable','on');
                 set(hObject,'value',0);
@@ -867,27 +897,38 @@ function manual_clus_button_Callback(hObject, eventdata,handles_local, cl)
             sp_selected = (max(spikes(valids,xind:xend),[],2)>ymin) &  (min(spikes(valids,xind:xend),[],2)<ymax);
             valids(valids==1) = sp_selected;
         else
-            xD = xend-xind;
-            yD = ymin - ymax;
-            if xD==0 || yD == 0
-                set(hObject,'Enable','on');
-                set(hObject,'value',0);
-                return;
-            end
-            [Mh, Mpos] = max(spikes(valids,xind:xend)');
-            [mh ,mpos] = min(spikes(valids,xind:xend)');
-            if ceil(rect(1)) < 1 %if rect is out the axis, extreme in border count like inside the rectangle
-                xiborder=0;
+            if selectingFeatureSpace
+                spikeFeatures = inspk(valids,1:2);
+                sp_selected = spikeFeatures(:,1)>=xmin & spikeFeatures(:,1)<=xmax;
+                sp_selected = sp_selected & spikeFeatures(:,2)>=ymin & spikeFeatures(:,2)<=ymax;
             else
-                xiborder=1;
+                xD = xend-xind;
+                yD = ymin - ymax;
+                if xD==0 || yD == 0
+                    set(hObject,'Enable','on');
+                    set(hObject,'value',0);
+                    return;
+                end
+                if handles.manualgetall.Value
+                    spikeValues=spikes(valids,xind:xend);
+                    sp_selected = any(spikeValues>=ymin & spikeValues<=ymax,2);
+                else % default wave_clus behavior
+                    [Mh, Mpos] = max(spikes(valids,xind:xend)'); % maximum value and position within window of max value
+                    [mh ,mpos] = min(spikes(valids,xind:xend)');% minimum value and position within window of min value
+                    if ceil(rect(1)) < 1 %if rect is out the axis, extreme in border count like inside the rectangle
+                        xiborder=0;
+                    else
+                        xiborder=1;
+                    end
+                    if floor(rect(1) + rect(3)) > size(spikes,2) %if rect is out the axis, extreme in border count like inside the rectangle
+                        xeborder = xD+2;
+                    else
+                        xeborder = xD;
+                    end
+                    sp_selected = (Mh >= ymin & Mh <= ymax) & (Mpos > xiborder & Mpos < xeborder);
+                    sp_selected = sp_selected |((mh >= ymin & mh <= ymax) & (mpos > xiborder & mpos < xeborder));
+                end
             end
-            if floor(rect(1) + rect(3)) > size(spikes,2) %if rect is out the axis, extreme in border count like inside the rectangle
-                xeborder = xD+2;
-            else
-                xeborder = xD;
-            end
-            sp_selected = (Mh >= ymin & Mh <= ymax) & (Mpos > xiborder & Mpos < xeborder);
-            sp_selected = sp_selected |((mh >= ymin & mh <= ymax) & (mpos > xiborder & mpos < xeborder));
             valids(valids==1) = sp_selected;
         end
         if nnz(valids)==0
